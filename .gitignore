@@ -6,3 +6,4 @@ tsconfig.tsbuildinfo
 # original-portfolio audit downloads (source material, not used by the build —
 # everything the site serves lives in public/assets)
 /assets
+.vercel
