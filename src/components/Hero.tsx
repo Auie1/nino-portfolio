@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { identity } from "../content";
+import HandsBackdrop from "./HandsBackdrop";
 
 /**
  * Opening viewport: oversized serif PORTFOLIO on the left, hanging badge on
@@ -38,6 +39,7 @@ export default function Hero() {
 
   return (
     <header className="hero" id="top">
+      <HandsBackdrop />
       <div ref={glowCoolRef} className="hero__glow hero__glow--cool" aria-hidden="true" />
       <div ref={glowWarmRef} className="hero__glow hero__glow--warm" aria-hidden="true" />
 

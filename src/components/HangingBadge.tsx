@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { BadgePhysics } from "../physics/badgePhysics";
 import { identity } from "../content";
+import { intro, START_LENGTH_FACTOR } from "../intro/introTimeline";
 
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
@@ -23,6 +24,7 @@ export default function HangingBadge() {
   const laceGroupRef = useRef<SVGGElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const chipRef = useRef<HTMLAnchorElement>(null);
+  const hintRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const wrap = wrapRef.current!;
@@ -33,6 +35,8 @@ export default function HangingBadge() {
     const buckle = buckleRef.current!;
     const laceGroup = laceGroupRef.current!;
     const chip = chipRef.current!;
+    const hint = hintRef.current!;
+    const stage = stageRef.current!;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const vw = () => window.innerWidth;
@@ -55,11 +59,28 @@ export default function HangingBadge() {
     };
 
     const g0 = geometry();
+    // during the intro the badge starts tucked just under the light source and
+    // descends into the hero position, so the simulated lace begins short
+    const introRest = intro.active
+      ? { x: intro.startX, y: ANCHOR_Y + (g0.heroY - ANCHOR_Y) * START_LENGTH_FACTOR }
+      : { x: g0.heroX, y: g0.heroY };
     const physics = new BadgePhysics(
-      { x: g0.heroX, y: ANCHOR_Y },
-      { x: g0.heroX, y: g0.heroY },
+      { x: introRest.x, y: ANCHOR_Y },
+      introRest,
     );
     physics.reducedMotion = reduced;
+
+    // intro-owned initial state: badge + lace invisible, drag locked,
+    // stage lifted above the intro's black layer until the handoff
+    let introCleanup = false;
+    if (intro.active) {
+      wrap.style.opacity = "0";
+      laceGroup.style.opacity = "0";
+      hint.style.opacity = "0";
+      wrap.style.pointerEvents = "none";
+      stage.classList.add("badge-stage--intro");
+      introCleanup = true;
+    }
 
     // —— scroll-linked transition ——
     let scrollY = window.scrollY;
@@ -70,7 +91,7 @@ export default function HangingBadge() {
 
     // —— pointer drag ——
     const onPointerDown = (e: PointerEvent) => {
-      if (transition() > 0.35) return; // locked while compact
+      if (intro.active || transition() > 0.35) return; // locked during intro / while compact
       wrap.setPointerCapture(e.pointerId);
       wrap.classList.add("is-dragging");
       physics.grab({ x: e.clientX, y: e.clientY });
@@ -110,20 +131,36 @@ export default function HangingBadge() {
       last = now;
       const t = transition();
       const g = geometry();
+      const s = intro.frame(now);
+
+      // intro composes on the hero side of the geometry: anchor starts under
+      // the beam and glides to the hero spot while the lace extends (descend).
+      // The scroll blend toward compact still applies on top, uninterrupted.
+      const introAnchorX = s.anchorGlide < 1
+        ? intro.startX + (g.heroX - intro.startX) * s.anchorGlide
+        : g.heroX;
+      const introRestY = s.lengthFactor < 1
+        ? ANCHOR_Y + (g.heroY - ANCHOR_Y) * s.lengthFactor
+        : g.heroY;
 
       // interpolate mount + natural lace length from hero to compact
-      const anchorX = g.heroX + (g.compactX - g.heroX) * t;
-      const restY = g.heroY + (g.compactY - g.heroY) * t;
-      const scale = 1 + (0.24 - 1) * t;
+      const anchorX = introAnchorX + (g.compactX - introAnchorX) * t;
+      const restY = introRestY + (g.compactY - introRestY) * t;
+      // intro pop: the badge snaps 12% larger at the spark, settling to 1
+      const scale = (1 + (0.24 - 1) * t) * s.badgePop;
       physics.setGeometry({ x: anchorX, y: ANCHOR_Y }, { x: anchorX, y: restY });
 
       physics.step(dt, now / 1000);
 
       const center = physics.cardCenter(g.h);
+      if (intro.active) intro.reportBadge(center.x, center.y);
+
       // face swap at the edge-on instant: past 90° of flip, show the back face
-      // (unmirrored) and continue the rotation from the equivalent angle
-      const showBack = Math.cos(physics.flipY) < 0;
-      const renderAngle = showBack ? physics.flipY - Math.PI : physics.flipY;
+      // (unmirrored) and continue the rotation from the equivalent angle.
+      // The intro's unwind offset composes additively and lands on exactly 0.
+      const spinY = physics.flipY + s.flipOffset;
+      const showBack = Math.cos(spinY) < 0;
+      const renderAngle = showBack ? spinY - Math.PI : spinY;
       wrap.style.transform =
         `translate3d(${center.x - g.w / 2}px, ${center.y - g.h / 2}px, 0) ` +
         `scale(${scale}) rotate(${physics.tiltZ}rad) perspective(1100px) rotateY(${renderAngle}rad)`;
@@ -132,8 +169,31 @@ export default function HangingBadge() {
         wrap.classList.toggle("show-back", showBack);
       }
 
+      // intro reveal — direct opacity + spawn halo while it runs, released
+      // to CSS on the handoff (the final intro frame writes the identity
+      // values, identical to no inline style)
+      if (intro.active) {
+        wrap.style.opacity = String(s.badgeOpacity);
+        if (s.badgeGlow > 0.01) {
+          const g = s.badgeGlow;
+          wrap.style.filter =
+            `drop-shadow(0 0 ${14 + 26 * g}px rgba(244, 240, 226, ${0.5 * g})) ` +
+            `drop-shadow(0 0 ${52 * g}px rgba(198, 180, 135, ${0.32 * g}))`;
+        } else {
+          wrap.style.filter = "";
+        }
+        hint.style.opacity = String(s.hint * 0.85);
+      } else if (introCleanup) {
+        wrap.style.opacity = "";
+        wrap.style.filter = "";
+        wrap.style.pointerEvents = "";
+        hint.style.opacity = "";
+        stage.classList.remove("badge-stage--intro");
+        introCleanup = false;
+      }
+
       // lace fades as the badge compacts
-      const laceOpacity = Math.max(0, 1 - t * 1.8);
+      const laceOpacity = Math.max(0, 1 - t * 1.8) * s.badgeOpacity;
       laceGroup.style.opacity = String(laceOpacity);
       if (laceOpacity > 0.01) {
         const d = physics.ropePath();
@@ -246,7 +306,7 @@ export default function HangingBadge() {
               <div className="badge-card__punch" />
             </div>
           </div>
-          <div className="badge-hint">drag the badge</div>
+          <div ref={hintRef} className="badge-hint">drag the badge</div>
         </div>
       </div>
 

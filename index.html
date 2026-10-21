@@ -12,6 +12,31 @@
       href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
+    <style>
+      /* pre-React guard for the intro (see src/intro/introTimeline.ts): while
+         booting, keep the hero typography and badge out of the first paint so
+         the black opening frame is never undercut by a flash of content */
+      html.intro-boot body { background: #000; }
+      html.intro-boot .hero__grid,
+      html.intro-boot .hero__hud,
+      html.intro-boot .badge-stage { visibility: hidden; }
+    </style>
+    <script>
+      (function () {
+        try {
+          var p = new URLSearchParams(location.search).get("intro");
+          var played = sessionStorage.getItem("nino-intro-played");
+          if (p === "skip" || (played && p !== "replay")) return;
+          if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+          document.documentElement.classList.add("intro-boot");
+          setTimeout(function () {
+            document.documentElement.classList.remove("intro-boot");
+          }, 7000);
+        } catch (e) {
+          /* storage blocked — never block the page */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

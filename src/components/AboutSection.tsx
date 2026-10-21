@@ -12,8 +12,8 @@ export default function AboutSection() {
         <div className="about-photo-wrap reveal">
           <img
             className="about-photo"
-            src="/assets/about-photo.jpg"
-            alt="NINO — black and white photograph taken on the back of a truck"
+            src="/assets/profile.jpg"
+            alt="NINO standing in a night garden among flowering plants and lit trees"
             loading="lazy"
           />
           <span className="about-photo-frame" aria-hidden="true" />

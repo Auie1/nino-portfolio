@@ -1,7 +1,30 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { projects, type Project } from "../content";
+import { identity, labSlots, projects, type Project } from "../content";
 import { useReveal } from "../hooks/useReveal";
 import SectionHeading from "./SectionHeading";
+
+/** Real-text cover for the case-study card — replaces the old page-screenshot image */
+function CaseCover({ project }: { project: Project }) {
+  const original = project.caseStudy!.original;
+  return (
+    <span className="project-card__mock project-card__mock--case">
+      <span className="pcc__eyebrow mono">case study</span>
+      <span className="pcc__title serif-display">
+        {original.title} <i>↗</i>
+      </span>
+      <span className="pcc__intro">{original.intro}</span>
+      <span className="pcc__stats">
+        {original.stats.map((s) => (
+          <span className="pcc__stat" key={s.label}>
+            <span className="pcc__stat-value serif-display">{s.value}</span>
+            <span className="pcc__stat-label mono">{s.label}</span>
+          </span>
+        ))}
+      </span>
+      <span className="pcc__foot mono">before &amp; after — open for the full breakdown</span>
+    </span>
+  );
+}
 
 function ProjectCard({
   project,
@@ -62,7 +85,9 @@ function ProjectCard({
     >
       <span className="project-card__index">{project.index}</span>
       <span className="project-card__media">
-        {project.image ? (
+        {project.cssMock === "case" && project.caseStudy ? (
+          <CaseCover project={project} />
+        ) : project.image ? (
           <img className="project-card__img" src={project.image} alt={project.alt || ""} loading="lazy" />
         ) : (
           <span className="project-card__mock project-card__mock--system" aria-hidden="true">
@@ -198,6 +223,28 @@ function CaseStudyBody({ project }: { project: Project }) {
 
       <p className="cs__paragraph">{cs.paragraph}</p>
 
+      {cs.original && (
+        <div className="cs__table">
+          <p className="mono cs__table-label">before &amp; after — the overhaul</p>
+          <div className="cs__table-head mono" aria-hidden="true">
+            <span />
+            <span>before</span>
+            <span>after</span>
+          </div>
+          {cs.original.table.map((row) => (
+            <div className="cs__table-row" key={row.aspect}>
+              <span className="cs__table-aspect mono">{row.aspect}</span>
+              <span className="cs__table-before" data-label="before">
+                {row.before}
+              </span>
+              <span className="cs__table-after" data-label="after">
+                {row.after}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="cs__ba">
         <p className="cs__ba-label">
           {cs.beforeLabel[0]}
@@ -213,7 +260,7 @@ function CaseStudyBody({ project }: { project: Project }) {
       </div>
 
       <h4 className="cs__cta serif-display">{cs.cta}</h4>
-      <a className="cs__link mono" href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer">
+      <a className="cs__link mono" href={identity.instagram} target="_blank" rel="noopener noreferrer">
         let's keep in touch ↗
       </a>
     </div>
@@ -306,6 +353,20 @@ export default function ProjectsGallery() {
             project={p}
             onOpen={setOpen}
           />
+        ))}
+        {labSlots.map((slot) => (
+          <article className="labcard reveal" key={slot.code} aria-label={`${slot.title} — in the lab`}>
+            <span className="labcard__index mono">{slot.code}</span>
+            <span className="labcard__stamp mono" aria-hidden="true">
+              in the lab
+            </span>
+            <span className="labcard__body">
+              <span className="labcard__dot" aria-hidden="true" />
+              <span className="labcard__title serif-display">{slot.title}</span>
+              <span className="labcard__blurb">{slot.blurb}</span>
+            </span>
+            <span className="labcard__foot mono">watch this space</span>
+          </article>
         ))}
       </div>
       {open && <ProjectDetail project={open} onClose={() => setOpen(null)} />}

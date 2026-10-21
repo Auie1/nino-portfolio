@@ -223,6 +223,25 @@ img {
 
 /* ————— hero ————— */
 
+/* the live dot-field backdrop (Creation-of-Adam hands) */
+.hands-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* the offscreen source video feeding the canvas — never visible itself */
+.hands-source {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 2px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .hero {
   position: relative;
   min-height: 100svh;
@@ -488,12 +507,60 @@ img {
   border-radius: 14px;
   background: linear-gradient(
     115deg,
-    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.26) 0%,
     rgba(255, 255, 255, 0) 36%,
-    rgba(120, 110, 80, 0.06) 64%,
-    rgba(255, 255, 255, 0.22) 100%
+    rgba(198, 180, 135, 0.05) 64%,
+    rgba(255, 255, 255, 0.12) 100%
   );
   pointer-events: none;
+}
+
+/* dark collectible theme on the front — matches the skill-card faces */
+.badge-face--front {
+  background:
+    radial-gradient(130% 80% at 82% -8%, rgba(198, 180, 135, 0.16), transparent 55%),
+    linear-gradient(172deg, #12131a 0%, #0b0c10 68%, #08090c 100%);
+  color: #d6d1c2;
+}
+
+/* inner ornate frame, set off from the card edge */
+.badge-face--front::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(198, 180, 135, 0.24);
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+.badge-face--front .badge-card__photo {
+  border: 1px solid rgba(198, 180, 135, 0.35);
+  background: #171922;
+}
+
+.badge-face--front .badge-card__name {
+  color: #e8dfc8;
+}
+
+/* red diamond — the card-back logo callback, same as the skill cards */
+.badge-face--front .badge-card__name::before {
+  content: "◆ ";
+  font-size: 0.42em;
+  vertical-align: 0.18em;
+  color: #c05242;
+  letter-spacing: 0;
+}
+
+.badge-face--front .badge-card__role {
+  color: #a5a192;
+}
+
+.badge-face--front .badge-card__meta {
+  border-top: 1px solid rgba(198, 180, 135, 0.24);
+}
+
+.badge-face--front .badge-card__id {
+  color: rgba(198, 180, 135, 0.78);
 }
 
 /* face swap is driven by JS at the edge-on instant of the flip — no CSS
@@ -652,6 +719,70 @@ img {
   margin-top: 2px;
 }
 
+/* ————— cinematic intro —————
+   Black opening frame + the touch flashbang. All animation is driven by
+   src/intro/introTimeline.ts via direct style writes; these rules only
+   define the static shapes. pointer-events stays off permanently so the
+   overlay can never intercept clicks (during or after the intro). */
+
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  pointer-events: none;
+}
+
+.intro-overlay__black {
+  position: absolute;
+  inset: -2px;
+  background: #000;
+  opacity: 1;
+  will-change: opacity;
+}
+
+/* the flashbang shockwave: a white-gold burst born at the fingertip touch
+   point (sized + positioned by JS) that scales up to swallow the screen */
+.intro-flash {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #ffffff 0%,
+    #ffffff 26%,
+    rgba(253, 248, 236, 0.98) 42%,
+    rgba(243, 233, 210, 0.72) 58%,
+    rgba(198, 180, 135, 0.28) 74%,
+    rgba(198, 180, 135, 0) 82%
+  );
+  opacity: 0;
+  transform: scale(0);
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+/* light ring riding the expansion front */
+.intro-flash::after {
+  content: "";
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 0 46px rgba(255, 250, 235, 0.55),
+    inset 0 0 70px rgba(255, 255, 255, 0.45);
+}
+
+/* the badge rides above the black frame for the duration of the intro so the
+   flash can reveal it; restored to its normal z-index at the handoff */
+.badge-stage--intro {
+  z-index: 220;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-overlay { display: none; }
+}
+
 /* ————— about ————— */
 
 .about-grid {
@@ -736,107 +867,235 @@ img {
   max-width: 52ch;
 }
 
-/* ————— skills ————— */
+/* ————— skills — face-down card deck ————— */
 
-.traits { border-top: 1px solid var(--line); }
-
-.trait-row {
-  display: grid;
-  grid-template-columns: 64px minmax(0, 5fr) minmax(0, 7fr);
-  gap: 20px 32px;
-  align-items: baseline;
-  padding: clamp(22px, 3.4vh, 34px) 0;
-  border-bottom: 1px solid var(--line);
-  transition: padding-left 0.35s var(--ease-out);
+.skillfan {
+  margin-top: clamp(40px, 6vh, 72px);
 }
 
-.trait-row:hover { padding-left: 12px; }
-
-.trait-row__index {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--muted);
-  letter-spacing: 0.14em;
-}
-
-.trait-row__title {
-  font-family: var(--font-display);
-  font-size: clamp(26px, 3.4vw, 44px);
-  line-height: 1;
-  transition: color 0.3s ease;
-}
-
-.trait-row:hover .trait-row__title { color: var(--accent); }
-
-.trait-row__note {
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.65;
-}
-
-.services {
-  margin-top: clamp(44px, 7vh, 80px);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.services__tag {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  padding: 10px 18px;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  color: var(--ink);
-  transition: border-color 0.25s ease, background 0.25s ease, color 0.25s ease;
-}
-
-.services__tag:hover {
-  border-color: rgba(198, 180, 135, 0.55);
-  background: rgba(198, 180, 135, 0.08);
+.skillfan__hint {
+  margin-top: 18px;
   color: var(--accent);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
 }
 
-.tools {
-  margin-top: clamp(44px, 7vh, 80px);
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 28px clamp(24px, 4vw, 64px);
-}
-
-.tools__group-label {
-  font-family: var(--font-mono);
+.skillfan__label {
   font-size: 10px;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 14px;
+  color: var(--muted);
+  margin-bottom: 16px;
 }
 
-.tools__list {
-  list-style: none;
+.skillfan__row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(12px, 1.6vw, 22px);
+  perspective: 1400px;
+}
+
+.skillcard {
+  position: relative;
+  aspect-ratio: 3 / 4.1;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  will-change: transform, opacity;
+}
+
+.skillcard:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+.skillcard__inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  /* slight overshoot — same springy feel as the badge physics */
+  transition: transform 0.85s cubic-bezier(0.24, 1.35, 0.36, 1);
+}
+
+.skillcard.is-flipped .skillcard__inner {
+  transform: rotateY(180deg);
+}
+
+.skillcard__face {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border: 1px solid var(--line-strong);
+  box-shadow:
+    0 24px 48px -20px rgba(0, 0, 0, 0.6),
+    0 6px 18px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.skillcard:hover .skillcard__face {
+  border-color: rgba(198, 180, 135, 0.55);
+  box-shadow:
+    0 30px 60px -22px rgba(0, 0, 0, 0.68),
+    0 8px 22px rgba(0, 0, 0, 0.4);
+}
+
+/* face-down side: the badge-back artwork */
+.skillcard__face--cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.92);
+}
+
+.skillcard:hover .skillcard__face--cover img {
+  filter: brightness(1.02);
+}
+
+.skillcard__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(5, 6, 8, 0.72), rgba(5, 6, 8, 0) 42%);
+}
+
+.skillcard__idx {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: rgba(240, 238, 231, 0.9);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+.skillcard__cover-hint {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 8.5px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(240, 238, 231, 0.82);
+}
+
+/* revealed side: dark collectible card — graphite, gold frame, ghost number */
+.skillcard__face--info {
+  transform: rotateY(180deg);
+  background:
+    radial-gradient(130% 80% at 82% -8%, rgba(198, 180, 135, 0.16), transparent 55%),
+    radial-gradient(120% 70% at 8% 112%, rgba(198, 180, 135, 0.07), transparent 60%),
+    linear-gradient(172deg, #12131a 0%, #0b0c10 68%, #08090c 100%);
+  color: #d6d1c2;
+  border-color: rgba(198, 180, 135, 0.4);
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 18px 16px 14px;
 }
 
-.tools__list li {
-  padding: 9px 0;
-  border-bottom: 1px solid var(--line);
-  font-size: 14px;
-  color: #c9c7bf;
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+/* inner ornate frame, set off from the card edge */
+.skillcard__face--info::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(198, 180, 135, 0.22);
+  border-radius: 8px;
+  pointer-events: none;
 }
 
-.tools__list li span:last-child {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.14em;
-  color: var(--muted);
+/* ghost index — same outlined-type motif as the hero title echo */
+.skillcard__ghost {
+  position: absolute;
+  right: 6px;
+  bottom: -10px;
+  font-size: 96px;
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(198, 180, 135, 0.16);
+  pointer-events: none;
+  user-select: none;
+}
+
+.skillcard__kicker {
+  font-size: 8px;
+  letter-spacing: 0.26em;
   text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* red diamond — callback to the card-back logo */
+.skillcard__kicker::before {
+  content: "◆ ";
+  color: #c05242;
+}
+
+.skillcard__title {
+  width: 100%;
+  text-align: center;
+  font-size: clamp(17px, 1.6vw, 23px);
+  line-height: 1.12;
+  color: #e8dfc8;
+  border: 1px solid rgba(198, 180, 135, 0.38);
+  background: rgba(198, 180, 135, 0.06);
+  padding: 9px 8px;
+}
+
+.skillcard__note {
+  font-size: 11px;
+  line-height: 1.58;
+  color: #a5a192;
+}
+
+.skillcard__tools {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  width: 100%;
+}
+
+.skillcard__tool {
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #cfcaba;
+  border: 1px solid rgba(198, 180, 135, 0.32);
+  background: rgba(198, 180, 135, 0.05);
+  border-radius: 999px;
+  padding: 4px 9px;
+}
+
+.skillcard__flip-hint {
+  margin-top: 4px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(198, 180, 135, 0.18);
+  width: 100%;
+  font-size: 7.5px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgba(198, 180, 135, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skillcard__inner { transition: none; }
+}
+
+@media (max-width: 719px) {
+  .skillfan__row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .skillcard { aspect-ratio: 3 / 4.3; }
+  .skillcard__note { font-size: 10px; line-height: 1.45; }
+  .skillcard__tool { font-size: 7px; padding: 3px 7px; }
+  /* touch users already know to tap — save the space for content */
+  .skillcard__flip-hint { display: none; }
 }
 
 /* ————— projects ————— */
@@ -872,6 +1131,8 @@ img {
 .project-card--normal { grid-column: span 7; }
 
 .project-card__media {
+  /* spans inside <button> default to inline — block lets aspect-ratio size it */
+  display: block;
   position: relative;
   overflow: hidden;
 }
@@ -953,6 +1214,88 @@ img {
 .project-card:hover .project-card__arrow {
   color: var(--accent);
   transform: translate(3px, -3px);
+}
+
+/* open reservation slots — same family as the deck, honestly labelled */
+.labcard {
+  position: relative;
+  grid-column: span 6;
+  border-radius: 6px;
+  border: 1px dashed rgba(198, 180, 135, 0.4);
+  background:
+    radial-gradient(90% 70% at 80% 0%, rgba(198, 180, 135, 0.06), transparent 60%),
+    linear-gradient(175deg, #0e0f13, #0a0b0e);
+  padding: 22px 20px 18px;
+  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+}
+
+.labcard__index {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+}
+
+.labcard__stamp {
+  position: absolute;
+  top: 18px;
+  right: 14px;
+  transform: rotate(-7deg);
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid rgba(198, 180, 135, 0.45);
+  border-radius: 3px;
+  padding: 5px 9px;
+  opacity: 0.85;
+}
+
+.labcard__dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-bottom: 12px;
+  animation: labPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes labPulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+.labcard__title {
+  font-size: clamp(22px, 2.4vw, 32px);
+  color: var(--ink);
+}
+
+.labcard__blurb {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 44ch;
+}
+
+.labcard__foot {
+  margin-top: auto;
+  padding-top: 14px;
+  font-size: 8.5px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .labcard__dot { animation: none; }
+}
+
+@media (max-width: 719px) {
+  .labcard { grid-column: span 12; min-height: 170px; }
 }
 
 /* ————— project detail overlay ————— */
@@ -1176,6 +1519,8 @@ img {
 }
 
 .cs__card-value {
+  /* .serif-display would otherwise paint these off-white on the cream card */
+  color: #15161a;
   font-size: clamp(30px, 4vw, 46px);
   line-height: 1;
 }
@@ -1183,6 +1528,161 @@ img {
 .cs__card-label {
   color: #6f6a58;
   font-size: 9px;
+}
+
+/* ————— case-study card cover (real text, replaces the old screenshot) ————— */
+
+.project-card__mock.project-card__mock--case {
+  position: absolute;
+  inset: 0;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 54px 22px 20px;
+  background:
+    radial-gradient(120% 90% at 85% -10%, rgba(198, 180, 135, 0.1), transparent 55%),
+    linear-gradient(175deg, #101116, #0a0b0e);
+  text-align: left;
+}
+
+.pcc__eyebrow {
+  position: absolute;
+  top: 15px;
+  right: 18px;
+  font-size: 8.5px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.pcc__title {
+  font-size: clamp(26px, 2.4vw, 38px);
+}
+
+.pcc__title i {
+  font-style: italic;
+  color: var(--accent);
+  font-size: 0.72em;
+}
+
+.pcc__intro {
+  margin-top: 10px;
+  font-size: 11.5px;
+  line-height: 1.62;
+  color: var(--muted);
+  max-width: 46ch;
+}
+
+.pcc__stats {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.pcc__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(240, 238, 231, 0.025);
+  padding: 12px 12px 10px;
+}
+
+.pcc__stat-value {
+  font-size: clamp(20px, 2vw, 30px);
+}
+
+.pcc__stat-label {
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pcc__foot {
+  margin-top: 14px;
+  font-size: 8.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ————— before & after table in the case study detail ————— */
+
+.cs__table {
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+
+.cs__table-label {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.cs__table-head,
+.cs__table-row {
+  display: grid;
+  grid-template-columns: 168px 1fr 1fr;
+  gap: 18px;
+  align-items: baseline;
+}
+
+.cs__table-head {
+  margin-top: 16px;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cs__table-row {
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.cs__table-aspect {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.cs__table-before,
+.cs__table-after {
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.cs__table-before {
+  color: var(--muted);
+}
+
+.cs__table-after {
+  color: #d6d4cb;
+}
+
+@media (max-width: 719px) {
+  .cs__table-head { display: none; }
+  .cs__table-head,
+  .cs__table-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .cs__table-before::before,
+  .cs__table-after::before {
+    content: attr(data-label) " — ";
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
 }
 
 
@@ -1573,11 +2073,6 @@ img {
   .hero__title { font-size: clamp(58px, 19.5vw, 120px); }
   .hero__hud--tl { display: none; }
   .hero__sub { max-width: 62%; }
-
-  .trait-row { grid-template-columns: 44px 1fr; }
-  .trait-row__note { grid-column: 2; }
-
-  .tools { grid-template-columns: minmax(0, 1fr); }
 
   .project-card--tall,
   .project-card--normal,

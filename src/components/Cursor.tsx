@@ -29,7 +29,7 @@ export default function Cursor() {
       }
       const target = e.target as HTMLElement | null;
       const interactive = target?.closest(
-        "a, button, .badge-wrap, .project-card, .services__tag",
+        "a, button, .badge-wrap, .project-card, .skillcard",
       );
       ring.classList.toggle("is-active", Boolean(interactive));
     };
